@@ -8,8 +8,24 @@
 Este proyecto consiste en un renderizador por software desarrollado en Rust para cargar y visualizar modelos tridimensionales en formato OBJ. El sistema recorre manualmente los vértices y las caras trianguladas del archivo, calculando las transformaciones necesarias para proyectar el modelo centrado y a escala adecuada en la pantalla.
 
 ## Demostración
+#### Malla triangular y relleno
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/562e1aac-3ba8-4a5b-bf59-c2447e1755a9" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/6d931438-4bfd-4e3b-b79a-af10d78bcbf8" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/62d1ec04-8651-4f1d-a58c-df139df45161" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/0f01e4c5-dbe2-4b8c-8148-a0834da467af" />
 
-pendiente
+
+#### Solamente malla triangular
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/4b86efd0-e675-4347-8a22-84fd84a433ef" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/91c5402b-e558-45b4-8eb7-2c42eb75d5a0" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/dc42a07c-0c78-469c-a065-c48d77f04611" />
+
+
+#### Solamente relleno de los triangulos
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/9f110b0c-87f5-402f-917e-344d1f69d19f" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/0a0d2094-2f32-488d-b715-4e7ff178e6db" />
+<img width="900" height="700" alt="render" src="https://github.com/user-attachments/assets/c4e2e24c-7ec9-458c-8730-5c04dfaad56b" />
+
 
 ## Características Técnicas
 * Lectura y procesamiento manual de archivos OBJ para la extracción de vértices y caras trianguladas.
