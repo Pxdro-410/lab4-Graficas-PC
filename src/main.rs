@@ -128,21 +128,6 @@ fn main() {
     println!("* Espacio: Restablecer vista inicial");
     println!("* ESC: Salir");
 
-    framebuffer.clear();
-    render(
-        &mut framebuffer,
-        &model,
-        &rotation,
-        current_scale,
-        current_mode,
-        COLOR_RELLENO,
-        COLOR_BORDE,
-    );
-    if let Err(e) = framebuffer.save_to_file("render.png") {
-        eprintln!("Error al generar render.png: {}", e);
-    } else {
-        println!("Imagen render.png generada exitosamente.");
-    }
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         if window.is_key_down(Key::Left) || window.is_key_down(Key::A) {
