@@ -96,8 +96,8 @@ fn main() {
     window.set_target_fps(60);
 
     let mut framebuffer = Framebuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
-    framebuffer.set_background_color(0x0a0a10); // Azul oscuro espacial
-    framebuffer.set_current_color(0x00E5FF);    // Cian neón brillante para la nave
+    framebuffer.set_background_color(0x0a0a15); 
+    framebuffer.set_current_color(0xFF0000);  
 
     // Calcular factor de escala para que ocupe el 70% de la pantalla
     let target_screen_size = (WINDOW_HEIGHT as f32).min(WINDOW_WIDTH as f32) * 0.70;
