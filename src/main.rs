@@ -3,44 +3,162 @@ mod model;
 mod triangle;
 
 use framebuffer::Framebuffer;
+use minifb::{Key, Window, WindowOptions};
 use model::Model;
-use nalgebra_glm::Vec3;
-use triangle::{draw_line, draw_triangle_wireframe, draw_triangle_filled};
+use nalgebra_glm::{rotate_x, rotate_y, rotate_z, vec3, vec4, Mat4, Vec3};
+use triangle::draw_triangle;
+
+const WINDOW_WIDTH: usize = 900;
+const WINDOW_HEIGHT: usize = 700;
+
+/// Transforma los vértices 3D del modelo al espacio de pantalla:
+/// 1. Centra el modelo en el origen restando su centro geométrico.
+/// 2. Aplica rotación tridimensional.
+/// 3. Escala y traslada al centro del Framebuffer.
+fn render(
+    framebuffer: &mut Framebuffer,
+    model: &Model,
+    rotation: &Vec3,
+    scale: f32,
+    wireframe: bool,
+) {
+    let center = model.center();
+    let screen_w = framebuffer.width as f32;
+    let screen_h = framebuffer.height as f32;
+
+    // Matriz de rotación en los tres ejes
+    let mut rot_matrix = Mat4::identity();
+    rot_matrix = rotate_x(&rot_matrix, rotation.x);
+    rot_matrix = rotate_y(&rot_matrix, rotation.y);
+    rot_matrix = rotate_z(&rot_matrix, rotation.z);
+
+    // Transformar todos los vértices a coordenadas de pantalla
+    let transformed_vertices: Vec<Vec3> = model
+        .vertices
+        .iter()
+        .map(|v| {
+            // Centrar respecto al Bounding Box
+            let centered = v - center;
+
+            // Aplicar rotación
+            let v4 = vec4(centered.x, centered.y, centered.z, 1.0);
+            let rotated = rot_matrix * v4;
+
+            // Proyectar y escalar al centro de la pantalla
+            let screen_x = rotated.x * scale + (screen_w / 2.0);
+            let screen_y = -rotated.y * scale + (screen_h / 2.0);
+            let screen_z = rotated.z;
+
+            vec3(screen_x, screen_y, screen_z)
+        })
+        .collect();
+
+    // Recorrer manualmente las caras y dibujar cada triángulo
+    for face in &model.faces {
+        let v0 = &transformed_vertices[face[0]];
+        let v1 = &transformed_vertices[face[1]];
+        let v2 = &transformed_vertices[face[2]];
+
+        draw_triangle(framebuffer, v0, v1, v2, wireframe);
+    }
+}
 
 fn main() {
-    println!("Fase 2: Algoritmo de Bresenham y Función de Pintado de Triángulos");
+    println!("Fase 3: Proyección, Centrado, Escalado y Visualización en Pantalla");
 
-    // 1. Verificar carga de modelo
     let obj_path = "nave-lab3-PC.obj";
-    match Model::load(obj_path) {
-        Ok(model) => {
-            println!("Modelo '{}' listo ({} vertices, {} caras)", obj_path, model.vertices.len(), model.faces.len());
+    let model = match Model::load(obj_path) {
+        Ok(m) => {
+            println!("Modelo cargado exitosamente:");
+            println!("* Vértices: {}", m.vertices.len());
+            println!("* Caras: {}", m.faces.len());
+            println!("* Centro: {:?}", m.center());
+            println!("* Extensión máxima: {:.4}", m.max_extent());
+            m
         }
         Err(e) => {
-            eprintln!("Error al cargar el archivo OBJ: {}", e);
+            eprintln!("Error al cargar el archivo OBJ '{}': {}", obj_path, e);
             return;
         }
+    };
+
+    // Crear la ventana de visualización con minifb
+    let mut window = Window::new(
+        "Laboratorio 4 - Renderizador OBJ - Pedro Caso",
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        WindowOptions::default(),
+    )
+    .unwrap_or_else(|e| {
+        panic!("No se pudo crear la ventana de minifb: {}", e);
+    });
+
+    window.set_target_fps(60);
+
+    let mut framebuffer = Framebuffer::new(WINDOW_WIDTH, WINDOW_HEIGHT);
+    framebuffer.set_background_color(0x0a0a10); // Azul oscuro espacial
+    framebuffer.set_current_color(0x00E5FF);    // Cian neón brillante para la nave
+
+    // Calcular factor de escala para que ocupe el 70% de la pantalla
+    let target_screen_size = (WINDOW_HEIGHT as f32).min(WINDOW_WIDTH as f32) * 0.70;
+    let base_scale = target_screen_size / model.max_extent();
+    let mut current_scale = base_scale;
+
+    // Ángulos iniciales de rotación
+    let mut rotation = vec3(-0.35, 0.70, 0.0);
+    let mut wireframe_mode = true;
+
+    println!("\n Controles de la ventana");
+    println!("* Flechas / A-D-W-S : Rotar la nave en 3D");
+    println!("* Q / E             : Zoom (acercar / alejar)");
+    println!("* M                 : Alternar entre modo Wireframe y Sólido");
+    println!("* Espacio           : Restablecer vista inicial");
+    println!("* ESC               : Salir");
+
+    while window.is_open() && !window.is_key_down(Key::Escape) {
+        // Manejo de rotación
+        if window.is_key_down(Key::Left) || window.is_key_down(Key::A) {
+            rotation.y -= 0.04;
+        }
+        if window.is_key_down(Key::Right) || window.is_key_down(Key::D) {
+            rotation.y += 0.04;
+        }
+        if window.is_key_down(Key::Up) || window.is_key_down(Key::W) {
+            rotation.x -= 0.04;
+        }
+        if window.is_key_down(Key::Down) || window.is_key_down(Key::S) {
+            rotation.x += 0.04;
+        }
+
+        // Manejo de Zoom
+        if window.is_key_down(Key::E) {
+            current_scale *= 1.02;
+        }
+        if window.is_key_down(Key::Q) {
+            current_scale *= 0.98;
+        }
+
+        // Restablecer vista
+        if window.is_key_down(Key::Space) {
+            rotation = vec3(-0.35, 0.70, 0.0);
+            current_scale = base_scale;
+        }
+
+        // Alternar modo Wireframe / Sólido al presionar M
+        if window.is_key_pressed(Key::M, minifb::KeyRepeat::No) {
+            wireframe_mode = !wireframe_mode;
+            println!("Modo cambiado a: {}", if wireframe_mode { "Wireframe" } else { "Sólido" });
+        }
+
+        // Limpiar buffer con color de fondo
+        framebuffer.clear();
+
+        // Renderizar el modelo en el centro de la pantalla
+        render(&mut framebuffer, &model, &rotation, current_scale, wireframe_mode);
+
+        // Volcar el framebuffer a la ventana
+        window
+            .update_with_buffer(&framebuffer.buffer, WINDOW_WIDTH, WINDOW_HEIGHT)
+            .unwrap();
     }
-
-    // 2. Prueba del algoritmo de Bresenham y pintado de triángulos
-    let mut fb = Framebuffer::new(100, 100);
-    fb.set_current_color(0x00FF00); // Verde
-
-    // Línea de prueba con Bresenham
-    draw_line(&mut fb, (10, 10), (90, 10));
-
-    // Triángulo wireframe
-    let v0 = Vec3::new(20.0, 30.0, 0.0);
-    let v1 = Vec3::new(80.0, 30.0, 0.0);
-    let v2 = Vec3::new(50.0, 80.0, 0.0);
-    draw_triangle_wireframe(&mut fb, &v0, &v1, &v2);
-
-    // Triángulo relleno
-    fb.set_current_color(0xFF0000); // Rojo
-    let vf0 = Vec3::new(35.0, 45.0, 0.0);
-    let vf1 = Vec3::new(65.0, 45.0, 0.0);
-    let vf2 = Vec3::new(50.0, 70.0, 0.0);
-    draw_triangle_filled(&mut fb, &vf0, &vf1, &vf2);
-
-    println!("Línea y triángulos (wireframe y relleno) dibujados exitosamente en el Framebuffer.");
 }
