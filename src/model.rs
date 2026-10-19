@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use nalgebra_glm::Vec3;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Model {
     pub vertices: Vec<Vec3>,
@@ -10,6 +11,7 @@ pub struct Model {
     pub max_bound: Vec3,
 }
 
+#[allow(dead_code)]
 impl Model {
     /// Carga y parsea manualmente un archivo OBJ
     /// Recorre líneas de vértices (v) y caras (f)
