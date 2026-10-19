@@ -112,8 +112,18 @@ fn main() {
     println!("* Flechas / A-D-W-S : Rotar la nave en 3D");
     println!("* Q / E             : Zoom (acercar / alejar)");
     println!("* M                 : Alternar entre modo Wireframe y Sólido");
+    println!("* P                 : Guardar captura de pantalla en render.png");
     println!("* Espacio           : Restablecer vista inicial");
     println!("* ESC               : Salir");
+
+    // Renderizar la pose inicial y generar automáticamente render.png para el laboratorio
+    framebuffer.clear();
+    render(&mut framebuffer, &model, &rotation, current_scale, wireframe_mode);
+    if let Err(e) = framebuffer.save_to_file("render.png") {
+        eprintln!("Error al generar render.png: {}", e);
+    } else {
+        println!("Imagen 'render.png' generada exitosamente.");
+    }
 
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // Manejo de rotación
@@ -148,6 +158,15 @@ fn main() {
         if window.is_key_pressed(Key::M, minifb::KeyRepeat::No) {
             wireframe_mode = !wireframe_mode;
             println!("Modo cambiado a: {}", if wireframe_mode { "Wireframe" } else { "Sólido" });
+        }
+
+        // Guardar captura con la tecla P
+        if window.is_key_pressed(Key::P, minifb::KeyRepeat::No) {
+            if let Err(e) = framebuffer.save_to_file("render.png") {
+                eprintln!("Error al guardar captura: {}", e);
+            } else {
+                println!("Nueva captura guardada como 'render.png'");
+            }
         }
 
         // Limpiar buffer con color de fondo
